@@ -30,9 +30,7 @@ end
 % X_sin = sin(2*pi*f*t+phase);
 
 
-
-
-%%Find Transformation
+%% Find Hilbert Transformation
 Xh = conv(X,H); 
 Xh = Xh(n+1:n+length(X));
 
@@ -40,9 +38,10 @@ Xh = Xh(n+1:n+length(X));
 S = X+j*Xh;
 %resample the signal
 S = resample(S,10,1);
-t = resample(t,10,1);
+t = resample(t,10,1);           dT = dT/10;
+
 fc = 30E3  %carrier frequency
-phase_c = (pi/180)*30 %carrier phase
+phase_c = (pi/180)*0 %carrier phase
 St = S.*exp(j*(2*pi*fc*t+phase_c));
 st = real(St);   % signal to be transmitted
 plot(real(st))
@@ -53,16 +52,31 @@ hold off
 % upsample and add noise
 S_channel = resample(st,10,1);
 t = resample(t,10,1);   % maintain consistensy with time
-SNR = 10
+SNR = 1
 S_channel = awgn(S_channel,SNR);
 %% Reception of signal
 Srx = resample(S_channel,1,10);
 t = resample(t,1,10);
 Srx = Srx(1:end-100);   % drop last samples as resampling messes with it
 t = t(1:end-100);
-%get cos component of wave
-Srx_L = Srx.*cos(2*pi*fc*t);
+%get cos component of wave , mix it with cos at fc
+Srx_Mixed = Srx.*cos(2*pi*fc*t);
+plot(t,Srx_Mixed)
 %% Low pass filter the signal
+%generate  filter
+f_cutoff = 10000  ; % cutoff frequency of filter
+n = 5000;        % size of rect FIR filter
+x = (-n:n)*dT;
+LPF= sinc(f_cutoff*x);
+% apply transform
+S_L = conv(Srx_Mixed,LPF);
+S_L = S_L(n+1:n+length(Srx_Mixed));
+pause(1)
+plot(t,S_L)
+
+
+
+
 
 
 

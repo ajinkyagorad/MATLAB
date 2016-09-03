@@ -9,17 +9,17 @@ h = 1:n;
 h = 1./h/pi;
 H = [ -fliplr(h) 0 h];   % Generate Filter
 %% Generate Signal
-% %Square wave
-% nCyc = 5;
-% f = 100
-% oversampling = fs/f
-% t = 1/fs:1/fs:nCyc/f;
-% maxtime = t(end)
-% x = ones(1,oversampling/2);
-% X = [];
-% for i=1:2*nCyc
-%     X= [X ((-1)^i) * x];
-% end
+%Square wave
+nCyc = 5;
+f = 100
+oversampling = fs/f
+t = 1/fs:1/fs:nCyc/f;
+maxtime = t(end)
+x = ones(1,oversampling/2);
+X = [];
+for i=1:2*nCyc
+    X= [X ((-1)^i) * x];
+end
 
 % %sine wave
 % f = 1000
@@ -40,9 +40,11 @@ Xh = Xh(n+1:n+length(X));
 S = X+j*Xh;
 %resample the signal
 S = resample(S,10,1);
-t = resample(t,10,1);
+t = resample(t,10,1);           
+
 fc = 30E3  %carrier frequency
-St = S.*exp(j*2*pi*fc*t);
+phase_c = (pi/180)*30 %carrier phase
+St = S.*exp(j*(2*pi*fc*t+phase_c));
 st = real(St);   % signal to be transmitted
 plot(real(st))
 hold on
@@ -52,12 +54,19 @@ hold off
 % upsample and add noise
 S_channel = resample(st,10,1);
 t = resample(t,10,1);   % maintain consistensy with time
-SNR = 10
+SNR = -10
 S_channel = awgn(S_channel,SNR);
 %% Reception of signal
 Srx = resample(S_channel,1,10);
 t = resample(t,1,10);
-78
+Srx = Srx(1:end-100);   % drop last samples as resampling messes with it
+t = t(1:end-100);
+%get cos component of wave
+Srx_L = Srx.*cos(2*pi*fc*t);
+plot(t,Srx_L)
+%% Low pass filter the signal
+
+
 
 
 
